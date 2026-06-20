@@ -32,8 +32,6 @@ When you call `.backward()` on a final output node, the engine:
 | Sigmoid | `.sigmoid()` |
 | ReLU | `.relu()` |
 
-All operations support Python's reverse dunder methods (`__radd__`, `__rmul__`, etc.), so you can write natural expressions like `3 * node` or `1 - node`.
-
 ---
 
 ## Neural Network API
@@ -85,14 +83,40 @@ Averaged over the batch, and fully differentiable through the `Node` graph.
 
 ---
 
+## Computation Graph Visualizer
+
+Every forward pass through `Node` builds a live computation graph. You can render it with `plot_grph()`:
+
+```python
+x = Node(2.0, label='x')
+y = Node(3.0, label='y')
+z = x * y + x
+z.backward()
+
+dot = plot_grph(z)
+dot.render('graph', view=True)   # saves graph.svg and opens it
+```
+
+The visualizer uses **Graphviz** and renders an SVG with a dark-mode aesthetic:
+
+- **White record boxes** — each `Node` shows its `data` and `grad` side by side
+- **Purple circles** — operation nodes (`+`, `*`, `tanh`, etc.)
+- **Dark red arrows** — data flow from inputs → operations → outputs
+
+This makes it easy to visually trace how a value was computed and verify that gradients are flowing correctly during backprop.
+
+---
+
 ## Project Structure
 
 ```
-├── Node        # Scalar value with autograd
-├── Neuron      # Single neuron (weights + bias + activation)
-├── Layer       # Collection of neurons
-├── ANN         # Stacked layers (the full network)
-└── binary_cross_entropy_loss
+├── Node            # Scalar value with autograd
+├── Neuron          # Single neuron (weights + bias + activation)
+├── Layer           # Collection of neurons
+├── ANN             # Stacked layers (the full network)
+├── binary_cross_entropy_loss
+├── trace()         # Walks the graph, collects all nodes and edges
+└── plot_grph()     # Renders the computation graph as a dark-mode SVG
 ```
 
 ---
@@ -101,10 +125,13 @@ Averaged over the batch, and fully differentiable through the `Node` graph.
 
 ```
 numpy
+graphviz
 ```
 
-That's it. No PyTorch, no TensorFlow.
+No PyTorch, no TensorFlow — just math and graph traversal.
 
 ---
+
+## Inspiration
 
 Inspired by [Andrej Karpathy's micrograd](https://github.com/karpathy/micrograd). Built from scratch to understand what really happens under the hood when you call `.backward()`.
